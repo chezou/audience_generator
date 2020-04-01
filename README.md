@@ -38,7 +38,7 @@ Set `TD_API_KEY` for your master API key and `TD_API_SERVER` for your API endpoi
 
 ```bash
 $ export TD_API_KEY="1234/XXXXXXXXXX"
-$ epoxrt TD_API_SERVER="api.treasuredata.com"
+$ export TD_API_SERVER="api.treasuredata.com"
 $ audience_generator my_db
 ```
 
