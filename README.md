@@ -18,8 +18,18 @@ Prerequisites:
 - Python 3.6+
 - pip 19.02+
 
+We recomment to install after creating virtual environment as the following: 
+
 ```shell script
-$ pip install 
+$ python3 -m venv .venv
+$ source .venv/bin/activate
+(.venv)$ pip install git+https://github.com/chezou/audience_generator
+```
+
+Or, you can install with `--user` option.
+
+```shell script
+$ pip install --user git+https://github.com/chezou/audience_generator
 ```
 
 ### Usage
