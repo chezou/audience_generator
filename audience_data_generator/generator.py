@@ -77,13 +77,24 @@ TARGET_TABLES = ["users", "cities", "behavior_1", "behavior_2"]
 @click.command()
 @click.argument("database")
 @click.option("-o", "--overwrite", is_flag=True, help="Recreate target tables")
-def create_dummy_data(database, overwrite):
+@click.option("-v", "--verbose", count=True)
+def create_dummy_data(database, overwrite, verbose):
     """Create dummy data for Audience Studio in a database.
 
     Target tables are: users, cities, behavior_1, and behavior_2.
 
     Target database will be created automatically if not exists.
     """
+
+    if verbose > 2:
+        verbose = 2
+    levels = {0: logging.WARN, 1: logging.INFO, 2: logging.DEBUG}
+    logger = logging.getLogger(__name__)
+    ch = logging.StreamHandler()
+    logger.setLevel(levels[verbose])
+    ch.setLevel(levels[verbose])
+    logger.addHandler(ch)
+
     client = pytd.Client(database=database)
     client.create_database_if_not_exists(database)
 
@@ -92,23 +103,25 @@ def create_dummy_data(database, overwrite):
             if client.exists(database, table):
                 client.api_client.delete_table(database, table)
 
-    logging.info(f"Creating users table")
+    logger.info(f"Creating `{database}.users` table")
     client.query(USERS_SQL)
-    logging.info(f"Creating cities table")
+    logger.info(f"Creating `{database}.cities` table")
     client.query(CITIES_SQL)
-    logging.info(f"Creating behavior1 table")
+    logger.info(f"Creating `{database}.behavior1` table")
     client.query(BEHAVIOR1_SQL)
-    logging.info(f"Creating behavior2 table")
+    logger.info(f"Creating `{database}.behavior2` table")
     client.query(BEHAVIOR2_SQL)
 
     succeeded = True
     for table in TARGET_TABLES:
         if not client.exists(database, table):
             succeeded = False
-            logging.error(f"{database}.{table} doesn't exist")
+            logger.error(f"{database}.{table} doesn't exist")
 
     if not succeeded:
         sys.exit(1)
+
+    logger.info(f"Generated")
 
 
 if __name__ == "__main__":
