@@ -1,4 +1,5 @@
 import logging
+import os
 import sys
 
 import click
@@ -76,9 +77,16 @@ TARGET_TABLES = ["users", "cities", "behavior_1", "behavior_2"]
 
 @click.command()
 @click.argument("database")
+@click.option(
+    "-s",
+    "--api-server",
+    envvar="TD_API_SERVER",
+    default="https://api.treasuredata.com",
+    help="Treasure Data API Endpoint",
+)
 @click.option("-o", "--overwrite", is_flag=True, help="Recreate target tables")
 @click.option("-v", "--verbose", count=True)
-def create_dummy_data(database, overwrite, verbose):
+def create_dummy_data(api_server, database, overwrite, verbose):
     """Create dummy data for Audience Studio in a database.
 
     Target tables are: users, cities, behavior_1, and behavior_2.
@@ -95,7 +103,7 @@ def create_dummy_data(database, overwrite, verbose):
     ch.setLevel(levels[verbose])
     logger.addHandler(ch)
 
-    client = pytd.Client(database=database)
+    client = pytd.Client(apikey=os.environ["TD_API_KEY"], endpoint=api_server, database=database)
     client.create_database_if_not_exists(database)
 
     if overwrite:
