@@ -9,9 +9,9 @@ import pytd
 USERS_SQL = """\
 CREATE TABLE IF NOT EXISTS users AS
 WITH seq AS (
-  SELECT t2.time*10000+t1.time AS time
-  FROM UNNEST(SEQUENCE(0, 10)) AS t1(time)
-  CROSS JOIN UNNEST(SEQUENCE(0, 100)) AS t2(time)
+  SELECT 1400000000 + t2.time*{adjustment_coef}+t1.time AS time
+  FROM UNNEST(SEQUENCE(0, 9)) AS t1(time)
+  CROSS JOIN UNNEST(SEQUENCE(0, {sequence_end})) AS t2(time)
 )
 SELECT
   LPAD(TO_BASE(RAND(4294966016),16),8,'0')||'-'||LPAD(TO_BASE(RAND(57914),16),4,'0')||'-4'||LPAD(TO_BASE(RAND(3121),16),3,'0')||'-'||LPAD(TO_BASE(RAND(28423)+32768,16),4,'0')||'-'||LPAD(TO_BASE(RAND(281474976704467),16),12,'0') AS td_client_id,
@@ -72,7 +72,80 @@ JOIN fanout ON RAND() < 0.8
 JOIN cities ON true
 """
 
-TARGET_TABLES = ["users", "cities", "behavior_1", "behavior_2"]
+
+class AudienceGenerator:
+    TARGET_TABLES = ["users", "cities", "behavior_1", "behavior_2"]
+    MAX_ADJUSTMENT_COEF = 100_000_000
+
+    def __init__(
+        self, api_key, api_server, database, user_size, verbose, overwrite, dry_run
+    ):
+        self.client = pytd.Client(
+            apikey=api_key, endpoint=api_server, database=database
+        )
+        self.database = database
+        self.overwrite = overwrite
+        self.dry_run = dry_run
+
+        if user_size < 100 or user_size > self.MAX_ADJUSTMENT_COEF:
+            raise ValueError(f"user_size should be between 11 to 100000000")
+
+        self.user_size = user_size
+
+        if verbose > 2:
+            verbose = 2
+        levels = {0: logging.WARN, 1: logging.INFO, 2: logging.DEBUG}
+
+        self.logger = logging.getLogger(__name__)
+        ch = logging.StreamHandler()
+        self.logger.setLevel(levels[verbose])
+        ch.setLevel(levels[verbose])
+        self.logger.addHandler(ch)
+
+    def create_table_with_query(self, table, query):
+        self.logger.debug(f"Execute query:\n{query}")
+
+        if self.client.exists(self.database, table):
+            self.logger.warning(f"Table {self.database}.{table} exists. Skip creating")
+        elif not self.dry_run:
+            self.logger.info(f"Creating `{self.database}.{table}` table")
+            self.client.query(query)
+
+    def run(self):
+        if self.dry_run:
+            self.logger.info("Running with dry-run mode")
+        else:
+            self.client.create_database_if_not_exists(self.database)
+
+            if self.overwrite:
+                for table in self.TARGET_TABLES:
+                    if self.client.exists(self.database, table):
+                        self.client.api_client.delete_table(self.database, table)
+
+        sequence_end = int(self.user_size / 10)
+        adjustment_coef = int(self.MAX_ADJUSTMENT_COEF / sequence_end)
+        sequence_end = sequence_end - 1
+
+        formatted_sql = USERS_SQL.format(
+            adjustment_coef=adjustment_coef, sequence_end=sequence_end
+        )
+        self.create_table_with_query("users", formatted_sql)
+        self.create_table_with_query("cities", CITIES_SQL)
+        self.create_table_with_query("behavior1", BEHAVIOR1_SQL)
+        self.create_table_with_query("behavior2", BEHAVIOR2_SQL)
+
+        succeeded = True
+        for table in self.TARGET_TABLES:
+            if not self.client.exists(self.database, table):
+                succeeded = False
+                self.logger.error(f"{self.database}.{table} doesn't exist")
+
+        if succeeded:
+            self.logger.info("Generated tables")
+        else:
+            self.logger.error("Failed to generate tables")
+
+        return succeeded
 
 
 @click.command()
@@ -84,9 +157,18 @@ TARGET_TABLES = ["users", "cities", "behavior_1", "behavior_2"]
     default="https://api.treasuredata.com",
     help="Treasure Data API Endpoint",
 )
+@click.option(
+    "-n",
+    "--user-size",
+    default=1000,
+    help="Target order of generated users. Must be bewteen 11 to 100000000",
+)
 @click.option("-o", "--overwrite", is_flag=True, help="Recreate target tables")
+@click.option(
+    "-d", "--dry-run", is_flag=True, help="Check query with dry run. Set -vv to show query."
+)
 @click.option("-v", "--verbose", count=True)
-def create_dummy_data(api_server, database, overwrite, verbose):
+def create_dummy_data(api_server, user_size, database, overwrite, dry_run, verbose):
     """Create dummy data for Audience Studio in a database.
 
     Target tables are: users, cities, behavior_1, and behavior_2.
@@ -94,42 +176,18 @@ def create_dummy_data(api_server, database, overwrite, verbose):
     Target database will be created automatically if not exists.
     """
 
-    if verbose > 2:
-        verbose = 2
-    levels = {0: logging.WARN, 1: logging.INFO, 2: logging.DEBUG}
-    logger = logging.getLogger(__name__)
-    ch = logging.StreamHandler()
-    logger.setLevel(levels[verbose])
-    ch.setLevel(levels[verbose])
-    logger.addHandler(ch)
-
-    client = pytd.Client(apikey=os.environ["TD_API_KEY"], endpoint=api_server, database=database)
-    client.create_database_if_not_exists(database)
-
-    if overwrite:
-        for table in TARGET_TABLES:
-            if client.exists(database, table):
-                client.api_client.delete_table(database, table)
-
-    logger.info(f"Creating `{database}.users` table")
-    client.query(USERS_SQL)
-    logger.info(f"Creating `{database}.cities` table")
-    client.query(CITIES_SQL)
-    logger.info(f"Creating `{database}.behavior1` table")
-    client.query(BEHAVIOR1_SQL)
-    logger.info(f"Creating `{database}.behavior2` table")
-    client.query(BEHAVIOR2_SQL)
-
-    succeeded = True
-    for table in TARGET_TABLES:
-        if not client.exists(database, table):
-            succeeded = False
-            logger.error(f"{database}.{table} doesn't exist")
-
+    generator = AudienceGenerator(
+        api_key=os.environ["TD_API_KEY"],
+        api_server=api_server,
+        database=database,
+        user_size=user_size,
+        overwrite=overwrite,
+        dry_run=dry_run,
+        verbose=verbose,
+    )
+    succeeded = generator.run()
     if not succeeded:
         sys.exit(1)
-
-    logger.info(f"Generated")
 
 
 if __name__ == "__main__":
