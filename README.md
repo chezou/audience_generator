@@ -42,10 +42,26 @@ $ export TD_API_SERVER="api.treasuredata.com"
 $ audience_generator my_db
 ```
 
-You can use `--overwrite` or `-o` option to drop existing tables.
+You can see detailed option with `--help` option.
 
 ```shell script
-$ audience_generator my_db -o
+Usage: audience_generator [OPTIONS] DATABASE
+
+  Create dummy data for Audience Studio in a database.
+
+  Target tables are: users, cities, behavior_1, and behavior_2.
+
+  Target database will be created automatically if not exists.
+
+Options:
+  -s, --api-server TEXT    Treasure Data API Endpoint
+  -n, --user-size INTEGER  Target order of generated users. Must be bewteen 11
+                           to 100000000
+
+  -o, --overwrite          Recreate target tables
+  -d, --dry-run            Check query with dry run. Set -vv to show query.
+  -v, --verbose
+  --help                   Show this message and exit.
 ```
 
 ## The dummy data examples
