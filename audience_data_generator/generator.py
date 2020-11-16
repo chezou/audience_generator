@@ -10,7 +10,7 @@ USERS_SQL = """\
 CREATE TABLE IF NOT EXISTS users AS
 WITH seq AS (
   SELECT 1400000000 + t2.time*{adjustment_coef}+t1.time AS time
-  FROM UNNEST(SEQUENCE(0, 9)) AS t1(time)
+  FROM UNNEST(SEQUENCE(0, {sequence_end_from})) AS t1(time)
   CROSS JOIN UNNEST(SEQUENCE(0, {sequence_end})) AS t2(time)
 )
 SELECT
@@ -72,13 +72,51 @@ JOIN fanout ON RAND() < 0.8
 JOIN cities ON true
 """
 
+ATTRIBUTE1_SQL = """\
+CREATE TABLE IF NOT EXISTS attribute_1 AS
+SELECT
+  users.td_client_id AS td_client_id
+  , (ARRAY ['japan', 'japan', 'usa', 'usa', 'usa', 'canada'])[RAND(6) + 1] AS country
+  , (ARRAY ['Linux', 'Windows', 'iOS', 'iOS', 'macOS', 'Android', 'Android'])[RAND(7) + 1] AS td_os
+  , (ARRAY ['ja_JP', 'en_GB', 'en_US', 'ja_JP'])[RAND(4) + 1] AS td_language
+  , users.time + RAND(90) * 86400 AS time
+FROM users
+"""
+
+# This attribute has NULL id key
+ATTRIBUTE2_SQL = """\
+CREATE TABLE IF NOT EXISTS attribute_2 AS
+SELECT
+  IF(RAND() < {non_null_rate}, users.td_client_id, NULL) as td_client_id
+  , RANDOM(60) AS age
+  , RANDOM(5) AS item_count
+  , RANDOM() AS ctr
+  , users.time + RAND(90) * 86400 AS time
+FROM users
+"""
+
 
 class AudienceGenerator:
-    TARGET_TABLES = ["users", "cities", "behavior_1", "behavior_2"]
+    TARGET_TABLES = [
+        "users",
+        "cities",
+        "behavior_1",
+        "behavior_2",
+        "attribute_1",
+        "attribute_2",
+    ]
     MAX_ADJUSTMENT_COEF = 100_000_000
 
     def __init__(
-        self, api_key, api_server, database, user_size, verbose, overwrite, dry_run
+        self,
+        api_key,
+        api_server,
+        database,
+        user_size,
+        non_null_rate,
+        verbose,
+        overwrite,
+        dry_run,
     ):
         self.client = pytd.Client(
             apikey=api_key, endpoint=api_server, database=database
@@ -88,9 +126,10 @@ class AudienceGenerator:
         self.dry_run = dry_run
 
         if user_size < 100 or user_size > self.MAX_ADJUSTMENT_COEF:
-            raise ValueError(f"user_size should be between 11 to 100000000")
+            raise ValueError(f"user_size should be between 100 to 100000000")
 
         self.user_size = user_size
+        self.non_null_rate = non_null_rate
 
         if verbose > 2:
             verbose = 2
@@ -122,18 +161,31 @@ class AudienceGenerator:
                     if self.client.exists(self.database, table):
                         self.client.api_client.delete_table(self.database, table)
 
-        sequence_end = int(self.user_size / 10)
+        if self.user_size > 100_000:
+            sequence_end_from = int(self.user_size / 10_000) - 1
+            sequence_end = 10_000
+        else:
+            sequence_end_from = 9
+            sequence_end = int(self.user_size / 10)
+
         adjustment_coef = int(self.MAX_ADJUSTMENT_COEF / sequence_end)
         sequence_end = sequence_end - 1
 
         formatted_sql = USERS_SQL.format(
-            adjustment_coef=adjustment_coef, sequence_end=sequence_end
+            adjustment_coef=adjustment_coef,
+            sequence_end=sequence_end,
+            sequence_end_from=sequence_end_from,
         )
         self.create_table_with_query("users", formatted_sql)
         self.create_table_with_query("cities", CITIES_SQL)
-        self.create_table_with_query("behavior1", BEHAVIOR1_SQL)
-        self.create_table_with_query("behavior2", BEHAVIOR2_SQL)
+        self.create_table_with_query("behavior_1", BEHAVIOR1_SQL)
+        self.create_table_with_query("behavior_2", BEHAVIOR2_SQL)
+        self.create_table_with_query("attribute_1", ATTRIBUTE1_SQL)
+        self.create_table_with_query(
+            "attribute_2", ATTRIBUTE2_SQL.format(non_null_rate=self.non_null_rate)
+        )
 
+        # Check if target tables are created
         succeeded = True
         for table in self.TARGET_TABLES:
             if not self.client.exists(self.database, table):
@@ -161,17 +213,29 @@ class AudienceGenerator:
     "-n",
     "--user-size",
     default=1000,
-    help="Target order of generated users. Must be bewteen 11 to 100000000",
+    help="Target order of generated users. Must be between 100 to 100000000",
+)
+@click.option(
+    "-r",
+    "--non-null-rate",
+    default=0.001,
+    help="Non null rate for td_client_id in attribute_2 table",
 )
 @click.option("-o", "--overwrite", is_flag=True, help="Recreate target tables")
 @click.option(
-    "-d", "--dry-run", is_flag=True, help="Check query with dry run. Set -vv to show query."
+    "-d",
+    "--dry-run",
+    is_flag=True,
+    help="Check query with dry run. Set -vv to show query.",
 )
 @click.option("-v", "--verbose", count=True)
-def create_dummy_data(api_server, user_size, database, overwrite, dry_run, verbose):
+def create_dummy_data(
+    database, api_server, user_size, non_null_rate, overwrite, dry_run, verbose
+):
     """Create dummy data for Audience Studio in a database.
 
-    Target tables are: users, cities, behavior_1, and behavior_2.
+    Target tables are users, cities, behavior_1, and behavior_2, attribute_1,
+    and attribute_2.
 
     Target database will be created automatically if not exists.
     """
@@ -181,6 +245,7 @@ def create_dummy_data(api_server, user_size, database, overwrite, dry_run, verbo
         api_server=api_server,
         database=database,
         user_size=user_size,
+        non_null_rate=non_null_rate,
         overwrite=overwrite,
         dry_run=dry_run,
         verbose=verbose,

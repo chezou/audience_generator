@@ -8,6 +8,8 @@ You can create a database (if not exists) including the following tables:
 - `cities`
 - `behavior_1`
 - `behavior_2`
+- `attribute_1`
+- `attribute_2`
 
 ## How to use
 
@@ -69,6 +71,7 @@ Options:
 ### users table
 
 This table consists of `time`, `td_client_id`, `email`, and `country` columns.
+
 - `email` column can be `a`, `b`, or `c` randomly
 - `country` can be `japan`, `usa`, `canada`. The ratio of them is japan:usa:canada = 2:3:1.
 
@@ -94,13 +97,12 @@ The example table looks like:
 |Rabat9|Rabat|9|1585294664|
 |Raleigh9|Raleigh|9|1585294664|
 
-
 ### behavior_1 table
 
 This table consists of `time`, `test_city_name`, and `td_client_id`.
 
 - By using `td_client_id`, you can join with `users` table
-- You can join with `cities` table with joining `behavior_1.test_city_name` and `cities.name`.   
+- You can join with `cities` table with joining `behavior_1.test_city_name` and `cities.name`.
 
 The example table looks like:
 
@@ -116,7 +118,7 @@ This table consists of `time`, `test_city_name`, `td_client_id`, and `opts`.
 
 - `opts` can be an integer from `0` to `2`
 - By using `td_client_id`, you can join with `users` table
-- You can join with `cities` table with joining `behavior_2.test_city_name` and `cities.name`.   
+- You can join with `cities` table with joining `behavior_2.test_city_name` and `cities.name`.
 
 The example table looks like:
 
@@ -126,3 +128,20 @@ The example table looks like:
 |8266808|Prague5|7ad27e8e-adce-4537-ecf2-d43e4f3ed5bd|0|
 |8234002|Palikir9|621c1386-5f7e-44ea-af4d-acd3020349eb|0|
 |8204000|Rio Rancho4|dddc1ac8-a68d-4c11-d477-2fb58908b23f|2|
+
+### attribute_1 table
+
+This table consists of `time`, `td_client_id`, `country`, `td_os`, and `td_language`.
+
+- `country` is the same field as `users` table
+- `td_os` contains `Linux`, `Windows`, `macOS`, `iOS`, and `Android`. The ratio is 1:1:1:2:2.
+- `td_language` contains `ja_JP`, `en_GB`, and `en_US`. The ratio is 2:1:1.
+
+### attribute_2 table
+
+This table consists of `td_client_id`, `age`, `item_count`, `ctr`, and `time`.
+
+- `td_client_id` is nullable. The ratio is determined by `non_null_rate` option
+- `age` is a random number which can be from 0 to 60
+- `item_count` is a random number which can be from 0 to 5
+- `ctr` is a random number from 0.0 to 1.0
