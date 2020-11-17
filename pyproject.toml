@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "audience_data_generator"
-version = "0.1.0"
+version = "0.2.0"
 description = "Generate Audience Dummy data"
 authors = ["Aki Ariga <ariga@treasure-data.com>"]
 readme = "README.md"
