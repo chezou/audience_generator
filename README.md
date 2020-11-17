@@ -137,6 +137,13 @@ This table consists of `time`, `td_client_id`, `country`, `td_os`, and `td_langu
 - `td_os` contains `Linux`, `Windows`, `macOS`, `iOS`, and `Android`. The ratio is 1:1:1:2:2.
 - `td_language` contains `ja_JP`, `en_GB`, and `en_US`. The ratio is 2:1:1.
 
+|time|country|td_client_id|td_os|td_language|
+|:---|:---|:---|:---|:---|
+|8376800|japan|dddc1ac8-a68d-4c11-d477-2fb58908b23f|Windows|en_US|
+|8266808|canada|7ad27e8e-adce-4537-ecf2-d43e4f3ed5bd|Android|ja_JP|
+|8234002|usa|621c1386-5f7e-44ea-af4d-acd3020349eb|iOS|ja_JP|
+|8204000|usa|dddc1ac8-a68d-4c11-d477-2fb58908b23f|macOS|en_GB|
+
 ### attribute_2 table
 
 This table consists of `td_client_id`, `age`, `item_count`, `ctr`, and `time`.
@@ -145,3 +152,10 @@ This table consists of `td_client_id`, `age`, `item_count`, `ctr`, and `time`.
 - `age` is a random number which can be from 0 to 60
 - `item_count` is a random number which can be from 0 to 5
 - `ctr` is a random number from 0.0 to 1.0
+
+|time|td_client_id|age|item_count|ctr|
+|:---|:---|:---|:---|:---|
+|8376800|dddc1ac8-a68d-4c11-d477-2fb58908b23f|36|1|0.994594137517313|
+|8266808|7ad27e8e-adce-4537-ecf2-d43e4f3ed5bd|54|2|0.58730152122260440.5873015212226044|
+|8234002|621c1386-5f7e-44ea-af4d-acd3020349eb|17|1|0.6011213596629439|
+|8204000|dddc1ac8-a68d-4c11-d477-2fb58908b23f|6|2|0.7007648809644941|
