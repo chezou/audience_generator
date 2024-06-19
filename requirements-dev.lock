@@ -9,26 +9,17 @@
 #   generate-hashes: false
 
 -e file:.
-appdirs==1.4.4
-    # via black
 attrs==23.2.0
-    # via black
     # via pytest
-black==19.10b0
 certifi==2024.6.2
     # via requests
 charset-normalizer==3.3.2
     # via requests
 click==7.1.2
     # via audience-data-generator
-    # via black
     # via presto-python-client
-flake8==3.9.2
 idna==3.7
     # via requests
-isort==4.3.21
-mccabe==0.6.1
-    # via flake8
 more-itertools==10.3.0
     # via pytest
 msgpack==1.0.8
@@ -41,18 +32,12 @@ packaging==24.1
     # via pytest
 pandas==1.5.3
     # via pytd
-pathspec==0.12.1
-    # via black
 pluggy==0.13.1
     # via pytest
 presto-python-client==0.8.4
     # via pytd
 py==1.11.0
     # via pytest
-pycodestyle==2.7.0
-    # via flake8
-pyflakes==2.3.1
-    # via flake8
 pytd==1.5.2
     # via audience-data-generator
 pytest==5.4.3
@@ -62,19 +47,15 @@ python-dateutil==2.9.0.post0
 pytz==2024.1
     # via pandas
     # via pytd
-regex==2024.5.15
-    # via black
 requests==2.32.3
     # via presto-python-client
+setuptools==70.1.0
+    # via audience-data-generator
 six==1.16.0
     # via presto-python-client
     # via python-dateutil
 td-client==1.2.1
     # via pytd
-toml==0.10.2
-    # via black
-typed-ast==1.5.5
-    # via black
 urllib3==1.26.19
     # via pytd
     # via requests

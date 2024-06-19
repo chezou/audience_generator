@@ -8,9 +8,10 @@ readme = "README.md"
 requires-python = ">=3.8"
 
 dependencies = [
-  "pytd>=1.5,<2",
-  "click>=7.1.1,<8",
-  "numpy>=1.22,<2",
+    "pytd>=1.5,<2",
+    "click>=7.1.1,<8",
+    "numpy>=1.22,<2",
+    "setuptools>=70.1.0",
 ]
 
 

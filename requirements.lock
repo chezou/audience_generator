@@ -38,6 +38,8 @@ pytz==2024.1
     # via pytd
 requests==2.32.3
     # via presto-python-client
+setuptools==70.1.0
+    # via audience-data-generator
 six==1.16.0
     # via presto-python-client
     # via python-dateutil
