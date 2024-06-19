@@ -17,10 +17,9 @@ You can create a database (if not exists) including the following tables:
 
 Prerequisites:
 
-- Python 3.6+
-- pip 19.02+
+- Python 3.8+
 
-We recomment to install after creating virtual environment as the following: 
+We recommend to install after creating a virtual environment as the following:
 
 ```shell script
 $ python3 -m venv .venv
@@ -44,7 +43,7 @@ $ export TD_API_SERVER="api.treasuredata.com"
 $ audience_generator my_db
 ```
 
-You can see detailed option with `--help` option.
+You can see detailed options with `--help` option.
 
 ```shell script
 Usage: audience_generator [OPTIONS] DATABASE
@@ -75,7 +74,7 @@ This table consists of `time`, `td_client_id`, `email`, and `country` columns.
 - `email` column can be `a`, `b`, or `c` randomly
 - `country` can be `japan`, `usa`, `canada`. The ratio of them is japan:usa:canada = 2:3:1.
 
-The example table looks like:
+The example table looks like this:
 
 |time|td_client_id|email|country|
 |:---|:---|:----|:---|
@@ -88,7 +87,7 @@ The example table looks like:
 
 This table consists of `name`, `cn`, `fanoutn`, and `time`.
 
-The example table looks like:
+The example table looks like this:
 
 |name|cn|fanoutn|time|
 |:---|:---|:---|:---|
@@ -102,9 +101,9 @@ The example table looks like:
 This table consists of `time`, `test_city_name`, and `td_client_id`.
 
 - By using `td_client_id`, you can join with `users` table
-- You can join with `cities` table with joining `behavior_1.test_city_name` and `cities.name`.
+- You can join with `cities` table by joining `behavior_1`.test_city_name` and `cities.name`.
 
-The example table looks like:
+The example table looks like this:
 
 |time|test_city_name|td_client_id|
 |:---|:---|:---|
@@ -118,9 +117,9 @@ This table consists of `time`, `test_city_name`, `td_client_id`, and `opts`.
 
 - `opts` can be an integer from `0` to `2`
 - By using `td_client_id`, you can join with `users` table
-- You can join with `cities` table with joining `behavior_2.test_city_name` and `cities.name`.
+- You can join with `cities` table by joining `behavior_2`.test_city_name` and `cities.name`.
 
-The example table looks like:
+The example table looks like this:
 
 |time|test_city_name|td_client_id|opts|
 |:---|:---|:---|:---|
